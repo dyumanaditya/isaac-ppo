@@ -6,7 +6,7 @@ from ppo.scripts.hyperparameters import Hyperparameters
 
 def main():
 	env_name = 'BipedalWalker-v3'
-	render = True
+	render = False
 	learn = True
 
 	if not learn:

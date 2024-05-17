@@ -4,9 +4,9 @@ class Hyperparameters:
 	"""
 	def __init__(self):
 		self.gamma = 0.99
-		self.lam = 0.95
-		self.actor_lr = 0.003
-		self.critic_lr = 0.001
+		self.lam = 0.97
+		self.actor_lr = 3e-5
+		self.critic_lr = 1e-4
 
 		self.clip_ratio = 0.2
 		self.kl_target = 0.01
@@ -19,12 +19,12 @@ class Hyperparameters:
 		self.actor_optimizer = 'Adam'
 		self.critic_optimizer = 'Adam'
 
-		self.memory_size = 1000
+		self.memory_size = 1700
 
 		self.num_policy_iters = 10
 		self.num_value_iters = 80
 
-		self.num_epochs = 1000
-		self.max_steps = 1000
+		self.num_epochs = 3000
+		self.max_steps = 1700
 
 		self.render = False

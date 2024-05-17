@@ -38,8 +38,8 @@ class PPO:
 		self.critic_optimizer = self.hyperparameters.critic_optimizer
 
 		# Initialize the actor and critic networks
-		self.actor = Actor(self.observation_space, self.action_space, self.actor_hidden_sizes, self.actor_activations, self.device)
-		self.critic = Critic(self.observation_space, self.critic_hidden_sizes, self.critic_activations, self.device)
+		self.actor = Actor(self.observation_space, self.action_space, self.actor_hidden_sizes, self.actor_activations, self.device).to(self.device)
+		self.critic = Critic(self.observation_space, self.critic_hidden_sizes, self.critic_activations, self.device).to(self.device)
 
 		# Initialize the actor and critic optimizers
 		self.actor_optimizer = self.actor.get_optimizer(self.actor_optimizer, self.actor_lr)
@@ -140,7 +140,7 @@ class PPO:
 		episode_reward = 0
 
 		# Simulate the environment
-		while episode_counter < max_episodes:
+		while episode_counter <= max_episodes:
 			if self.render:
 				self.env.render()
 

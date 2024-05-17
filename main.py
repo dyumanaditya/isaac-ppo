@@ -5,15 +5,27 @@ from ppo.scripts.hyperparameters import Hyperparameters
 
 
 def main():
-	env = gym.make("BipedalWalker-v3", render_mode=None)
+	env_name = 'BipedalWalker-v3'
+	render = True
+	learn = True
+
+	if not learn:
+		render = True
+
+	if render:
+		env = gym.make(env_name, render_mode='human')
+	else:
+		env = gym.make(env_name, render_mode=None)
 
 	# Create the hyperparameters object
 	hyperparameters = Hyperparameters()
-	hyperparameters.render = True
+	hyperparameters.render = render
 
 	agent = PPO(hyperparameters, env)
-	agent.learn()
-	# agent.simulate('policies/ppo_actor_800.pth', 'policies/ppo_critic_800.pth')
+	if learn:
+		agent.learn()
+	else:
+		agent.simulate('policies/ppo_actor_800.pth', 'policies/ppo_critic_800.pth')
 
 
 if __name__ == '__main__':

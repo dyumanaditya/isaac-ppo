@@ -178,15 +178,15 @@ class PPO:
 		loss, pi_info = self._compute_loss(minibatch)
 
 		# Perform optimization with clipped gradients
-		if pi_info['kl'] <= 1.5 * self.kl_target:
+		if self.kl_target is not None and pi_info['kl'] > 1.5 * self.kl_target:
+			return 0
+		else:
 			self.actor_critic_optimizer.zero_grad()
 			loss.backward()
 			torch.nn.utils.clip_grad_norm_(self.actor_critic.parameters(), self.max_grad_norm)
 			self.actor_critic_optimizer.step()
 
 			return loss.item()
-		else:
-			return 0
 
 	def _compute_loss(self, data):
 		states, actions, advantages, log_probs_old, returns = data['states'], data['actions'], data['advantages'], data['log_probs'], data['returns']

@@ -12,3 +12,7 @@
 #SBATCH --mail-user=%u@asu.edu # Mail-to address
 #SBATCH --export=NONE          # Purge the job-submitting shell environment
 #-------------------------------------------------------------------------
+
+module load mamba
+source activate rl
+python main.py

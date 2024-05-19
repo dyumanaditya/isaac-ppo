@@ -25,7 +25,7 @@ def main():
 	if learn:
 		agent.learn()
 	else:
-		agent.simulate('policies/ppo_actor_800.pth', 'policies/ppo_critic_800.pth')
+		agent.simulate('policies/ppo_actor_critic_100.pth')
 
 
 if __name__ == '__main__':

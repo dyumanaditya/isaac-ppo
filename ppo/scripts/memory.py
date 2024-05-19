@@ -54,6 +54,24 @@ class Memory:
 					advantages=self.advantages, log_probs=self.log_probs)
 		return {k: torch.as_tensor(v, dtype=torch.float32).to(self.device) for k, v in data.items()}
 
+	def get_minibatches(self, batch_size):
+		# Buffer has to be full before you can get
+		assert self.step == self.max_size, "Buffer is not full, you cannot get from it."
+
+		# Shuffle the data
+		indices = np.arange(self.max_size)
+		np.random.shuffle(indices)
+
+		for i in range(0, self.max_size, batch_size):
+			idx = indices[i:i + batch_size]
+			data = dict(states=self.states[idx], actions=self.actions[idx], returns=self.returns[idx],
+						advantages=self.advantages[idx], log_probs=self.log_probs[idx])
+			yield {k: torch.as_tensor(v, dtype=torch.float32).to(self.device) for k, v in data.items()}
+
+	def reset(self):
+		self.step = 0
+		self.trajectory_start_idx = 0
+
 	@staticmethod
 	def discount_return(rewards, discount_factor):
 		return scipy.signal.lfilter([1], [1, float(-discount_factor)], rewards[::-1], axis=0)[::-1]

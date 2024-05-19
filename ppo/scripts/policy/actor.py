@@ -30,7 +30,8 @@ class Actor(nn.Module):
 		# Get the mean from the actor network
 		mean = self.pi_net.mlp(state)
 		std = torch.exp(self.log_std)
-		return Normal(mean, std)
+		distribution = Normal(mean, std)
+		return distribution
 
 	def log_prob_from_distribution(self, state, act):
 		pi = self._distribution(state)

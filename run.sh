@@ -2,6 +2,7 @@
 
 #-------------------------------------------------------------------------
 #SBATCH -G a100:1              # number of GPUs
+#SBATCH -p general             # partition (queue)
 #SBATCH --cpus-per-gpu=20
 #SBATCH --mem=50G              # memory in GB
 #SBATCH -t 12:00:00          # time in d-hh:mm:ss

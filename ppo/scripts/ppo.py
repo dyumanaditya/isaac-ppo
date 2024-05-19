@@ -80,6 +80,8 @@ class PPO:
 
 		for timestep in range(self.max_steps):
 			# Collect rollouts
+			rollout_episode_counter = 0
+			max_rollout_reward = -np.inf
 			for rollout in range(self.memory_size):
 				if self.render:
 					self.env.render()
@@ -111,12 +113,14 @@ class PPO:
 					self.memory.finish_trajectory(value)
 
 					state, _ = self.env.reset()
+					max_rollout_reward = max(max_rollout_reward, episode_reward)
 					episode_reward = 0
 					episode_counter += 1
+					rollout_episode_counter += 1
 
 			# Print the mean reward of the last episodes in rollout
-			if timestep % 1 == 0 and episode_counter != 0:
-				print(f"Mean episode returns: {round(np.sum(self.memory.rewards) / episode_counter, 3)}, Loss: {round(loss, 6)} Episode: {episode_counter}")
+			if timestep % 1 == 0 and rollout_episode_counter != 0:
+				print(f"Mean episode returns: {round(np.sum(self.memory.rewards) / rollout_episode_counter, 3)}, Loss: {round(loss, 6)} Episode: {episode_counter}, Max Episode Reward: {max_rollout_reward}")
 
 			# Go over the rollouts for multiple epochs
 			for epoch in range(self.num_epochs):

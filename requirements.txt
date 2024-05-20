@@ -1,6 +1,6 @@
 numpy
 torch
 scipy
-gym
+gym[all]
 gymnasium
 stable-baselines3

@@ -21,7 +21,7 @@ def main():
 	hyperparameters = Hyperparameters()
 	hyperparameters.render = render
 
-	agent = PPO(hyperparameters, env)
+	agent = PPO(env, hyperparameters)
 	if learn:
 		agent.learn(max_steps=1000000)
 	else:

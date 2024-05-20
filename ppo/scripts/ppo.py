@@ -3,13 +3,17 @@ import numpy as np
 
 from ppo.scripts.memory import Memory
 from ppo.scripts.policy.actor_critic import ActorCritic
+from ppo.scripts.hyperparameters import Hyperparameters
 
 
 class PPO:
-	def __init__(self, hyperparameters, env):
+	def __init__(self, env, hyperparameters=None):
 		self.hyperparameters = hyperparameters
 		self.env = env
 		self.render = self.hyperparameters.render
+
+		if self.hyperparameters is None:
+			self.hyperparameters = Hyperparameters()
 
 		# Set the device
 		gpu = 0
@@ -133,11 +137,9 @@ class PPO:
 		# End
 		self.env.close()
 
-	def simulate(self, actor_critic_model_path):
+	def simulate(self, actor_critic_model_path, max_episodes=20):
 		# Load the model
 		self.actor_critic.load_state_dict(torch.load(actor_critic_model_path))
-
-		max_episodes = 20
 
 		# Reset the environment
 		state, _ = self.env.reset()
@@ -169,6 +171,12 @@ class PPO:
 
 		# End
 		self.env.close()
+
+	def save(self, path):
+		torch.save(self.actor_critic.state_dict(), path + '.pth')
+
+	def load(self, path):
+		self.actor_critic.load_state_dict(torch.load(path + '.pth'))
 
 	def _update_actor_critic(self, minibatch):
 		# Gather losses

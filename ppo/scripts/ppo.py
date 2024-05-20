@@ -1,8 +1,6 @@
 import torch
 import numpy as np
 
-from ppo.scripts.policy.actor import Actor
-from ppo.scripts.policy.critic import Critic
 from ppo.scripts.memory import Memory
 from ppo.scripts.policy.actor_critic import ActorCritic
 
@@ -47,17 +45,12 @@ class PPO:
 
 		# Initialize the actor and critic networks
 		self.actor_critic = ActorCritic(self.observation_space, self.action_space, self.actor_hidden_sizes, self.critic_hidden_sizes, self.actor_activations, self.critic_activations, self.device).to(self.device)
-		# self.actor = Actor(self.observation_space, self.action_space, self.actor_hidden_sizes, self.actor_activations, self.device).to(self.device)
-		# self.critic = Critic(self.observation_space, self.critic_hidden_sizes, self.critic_activations, self.device).to(self.device)
 
 		# Initialize the actor and critic optimizers
 		self.actor_critic_optimizer = self.actor_critic.get_optimizer(self.optimizer, self.lr)
-		# self.actor_optimizer = self.actor.get_optimizer(self.actor_optimizer, self.actor_lr)
-		# self.critic_optimizer = self.critic.get_optimizer(self.critic_optimizer, self.critic_lr)
 
 		# Iterations
 		self.num_epochs = self.hyperparameters.num_epochs
-		self.max_steps = self.hyperparameters.max_steps
 		self.minibatch_size = self.hyperparameters.minibatch_size
 
 		# Initialize memory
@@ -65,7 +58,7 @@ class PPO:
 		self.memory = Memory(self.observation_space, self.action_space, self.memory_size, self.device, self.gamma, self.lam)
 		self.normalize_advantages = self.hyperparameters.normalize_advantages
 
-	def learn(self, actor_critic_model_path=None):
+	def learn(self, max_steps=100000, actor_critic_model_path=None):
 		# Reset the environment
 		state, _ = self.env.reset()
 		loss = 0
@@ -78,7 +71,7 @@ class PPO:
 		episode_counter = 0
 		episode_reward = 0
 
-		for timestep in range(self.max_steps):
+		for timestep in range(max_steps):
 			# Collect rollouts
 			rollout_episode_counter = 0
 			max_rollout_reward = -np.inf
@@ -120,7 +113,7 @@ class PPO:
 
 			# Print the mean reward of the last episodes in rollout
 			if timestep % 1 == 0 and rollout_episode_counter != 0:
-				print(f"Mean episode returns: {round(np.sum(self.memory.rewards) / rollout_episode_counter, 3)}, Loss: {round(loss, 6)} Episode: {episode_counter}, Max Episode Reward: {max_rollout_reward}")
+				print(f"Mean episode returns: {round(np.sum(self.memory.rewards) / rollout_episode_counter, 3)}, Loss: {round(loss, 6)} Episode: {episode_counter}, Max Episode Reward: {max_rollout_reward}", flush=True)
 
 			# Go over the rollouts for multiple epochs
 			for epoch in range(self.num_epochs):

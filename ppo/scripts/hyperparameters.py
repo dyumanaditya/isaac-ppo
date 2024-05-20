@@ -9,8 +9,8 @@ class Hyperparameters:
 		self.lr = 1e-4
 
 		self.clip_ratio = 0.2
-		self.kl_target = 0.01
-		# self.kl_target = None
+		# self.kl_target = 0.01
+		self.kl_target = None
 
 		self.value_loss_coef = 0.5
 		self.entropy_coef = 0.0
@@ -27,7 +27,6 @@ class Hyperparameters:
 		# self.memory_size = 4096
 
 		self.num_epochs = 10
-		self.max_steps = 100000
 		self.minibatch_size = 64
 		self.normalize_advantages = True
 

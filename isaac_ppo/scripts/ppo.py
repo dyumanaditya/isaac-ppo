@@ -1,28 +1,39 @@
 import torch
 import time
+import gymnasium as gym
+from gymnasium.wrappers.record_video import RecordVideo
 
-from ppo.scripts.memory import Memory
-from ppo.scripts.policy.actor_critic import ActorCritic
-from ppo.scripts.hyperparameters import Hyperparameters
+from isaac_ppo.scripts.memory import Memory
+from isaac_ppo.scripts.policy.actor_critic import ActorCritic
+from isaac_ppo.scripts.hyperparameters import Hyperparameters
+from isaac_ppo.scripts.utils.logger import Logger
 
 
 class PPO:
-	def __init__(self, env, hyperparameters=None, save_freq=20):
+	def __init__(self, env, hyperparameters=None, save_freq=20, record_video=False, video_save_freq=2000, video_length=200, log_dir='.', device='gpu'):
+		"""
+		PPO for Isaac Sim Orbit
+		:param env: Isaac Sim Orbit environment
+		:param hyperparameters: Hyperparameters object for PPO
+		:param save_freq: The number of timesteps before which data is saved (logs, policies, videos)
+		:param record_video: Whether to record videos during the training at video_save_freq
+		:param video_save_freq: Frequency at which to save the video in environment steps
+		:param video_length: The length of the video to record (in environment interaction steps)
+		:param log_dir: The Directory to save all logs for a particular run
+		:param device: The device to run the training on ('cpu' or 'gpu')
+		"""
 		self.hyperparameters = hyperparameters
 		self.save_freq = save_freq
+		self.record_video = record_video
 		self.env = env
-		self.render = self.hyperparameters.render
 		self.verbose = True
 
 		if self.hyperparameters is None:
 			self.hyperparameters = Hyperparameters()
 
-		# Every PPO instance is given a timestamp to save all related files
-		self.timestamp = time.strftime('%d-%m-%Y__%H-%M-%S')
-
 		# Set the device
 		gpu = 0
-		self.compute = self.hyperparameters.device
+		self.compute = device
 		if self.compute == 'gpu':
 			self.device = torch.device(f"cuda:{gpu}" if torch.cuda.is_available() else "cpu")
 		else:
@@ -35,9 +46,6 @@ class PPO:
 
 		# Number of environments we run in parallel
 		self.num_envs = env.observation_space['policy'].shape[0]
-
-		# Where to save policies
-		self.log_dir = '.'
 
 		# Make hyperparameters class attributes
 		self.gamma = self.hyperparameters.gamma
@@ -74,17 +82,44 @@ class PPO:
 		self.num_transitions_per_env = self.hyperparameters.num_transitions_per_env
 		self.memory = Memory(self.observation_space, self.action_space, self.num_envs, self.num_transitions_per_env, self.device, self.gamma, self.lam)
 
-	def learn(self, max_steps=100000, actor_critic_model_path=None):
+		# Every PPO instance is given a timestamp to save all related files
+		# Create a stamp that is unique to the task and time
+		timestamp = time.strftime('%d-%m-%Y__%H-%M-%S')
+		self.stamp = f'{env.spec.name}-{self.num_envs}--{timestamp}'
+
+		# Where to save logs
+		self.log_dir = log_dir
+
+		# Create Logger that will log all details
+		self.logger = Logger(self.log_dir, self.stamp, self.save_freq, self.record_video)
+
+		# Setup Video recording
+		if self.record_video:
+			video_kwargs = {
+				'video_folder': self.logger.video_folder,
+				'video_length': video_length,
+				'step_trigger': lambda x: x % video_save_freq == 0,
+				'disable_logger': True,
+				'name_prefix': self.stamp
+			}
+			self.env = RecordVideo(self.env, **video_kwargs)
+
+	def learn(self, max_steps=100000, actor_critic_model_path=None, optimizer_model_path=None):
+		# Log the hyperparameters
+		self.logger.log_hyperparameters(self.hyperparameters.as_dict())
+
 		# Reset the environment
 		states, _ = self.env.reset()
-		loss = 0
 
 		# Load the model if specified
 		if actor_critic_model_path is not None:
 			self.actor_critic.load_state_dict(torch.load(actor_critic_model_path))
+		if optimizer_model_path is not None:
+			self.actor_critic_optimizer.load_state_dict(torch.load(optimizer_model_path))
 
 		total_episodes = 0
 		env_steps = 0
+		total_policy_updates = 0
 		for timestep in range(max_steps):
 			# Episode related information
 			num_rollout_episodes = 0
@@ -96,9 +131,6 @@ class PPO:
 			# Collect rollouts
 			with torch.inference_mode():
 				for rollout in range(self.num_transitions_per_env):
-					if self.render:
-						self.env.render()
-
 					# Get the action from the actor and take it
 					# State is in the form of a dictionary
 					states = states['policy']
@@ -152,6 +184,7 @@ class PPO:
 					mean_surrogate_loss += surrogate_loss
 
 			num_updates = self.num_epochs * self.num_minibatches
+			total_policy_updates += num_updates
 			mean_loss /= num_updates
 			mean_value_loss /= num_updates
 			mean_surrogate_loss /= num_updates
@@ -159,32 +192,22 @@ class PPO:
 			# Reset the memory
 			self.memory.reset()
 
+			# LOGGING
+			if num_rollout_episodes == 0:
+				mean_episode_reward = torch.sum(episode_rewards).item()
+				mean_episode_length = torch.sum(episode_length).item()
+			else:
+				mean_episode_reward = cumulative_episode_rewards / num_rollout_episodes
+				mean_episode_length = cumulative_episode_lengths / num_rollout_episodes
+
+			self.logger.log_training_info(timestep, env_steps, total_episodes, total_policy_updates, mean_episode_reward, mean_episode_length, mean_loss, mean_value_loss, mean_surrogate_loss, self.lr)
+
 			# Print Information
 			if self.verbose:
-				print("-" * 50)
-				print(f"Total steps: {timestep}", flush=True)
-				print(f"Total env steps: {env_steps}", flush=True)
-				print(f"Total episodes: {total_episodes}", flush=True)
-				print("--")
-				if num_rollout_episodes == 0:
-					mean_episode_reward = torch.sum(episode_rewards).item()
-					mean_episode_length = torch.sum(episode_length).item()
-				else:
-					mean_episode_reward = cumulative_episode_rewards / num_rollout_episodes
-					mean_episode_length = cumulative_episode_lengths / num_rollout_episodes
-				print(f"Mean Episode Reward: {round(mean_episode_reward, 10)}", flush=True)
-				print(f"Mean Episode Length: {round(mean_episode_length, 10)}", flush=True)
-				print("--")
-				print(f"Mean Loss: {mean_loss}", flush=True)
-				print(f"Mean Value Loss: {mean_value_loss}", flush=True)
-				print(f"Mean Surrogate Loss: {mean_surrogate_loss}", flush=True)
-				print("--")
-				print(f"Learning Rate: {self.lr}")
-				print("-" * 50)
+				self.logger.log_to_console(timestep, env_steps, total_episodes, total_policy_updates, mean_episode_reward, mean_episode_length, mean_loss, mean_value_loss, mean_surrogate_loss, self.lr)
 
 			# Save the model
-			if timestep % self.save_freq == 0:
-				torch.save(self.actor_critic.state_dict(), f"{self.log_dir}/ppo_actor_critic_{env_steps}.pth")
+			self.logger.log_policy(self.actor_critic.state_dict(), self.actor_critic_optimizer.state_dict(), timestep)
 
 			env_steps += self.num_transitions_per_env * self.num_envs
 
@@ -207,9 +230,6 @@ class PPO:
 
 		# Simulate the environment
 		while episode_counter <= max_episodes:
-			if self.render:
-				self.env.render()
-
 			with torch.inference_mode():
 				# Get the action from the actor and take it
 				# State is in the form of a dictionary

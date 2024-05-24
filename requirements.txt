@@ -3,6 +3,7 @@ torch
 scipy
 gym
 gym[box2d]
-gymnasium
+gymnasium==0.29.0
 stable-baselines3
 torchsummary
+pandas

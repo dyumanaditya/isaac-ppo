@@ -11,7 +11,7 @@ with open('requirements.txt') as f:
     requirements = f.read().splitlines()
 
 setup(
-    name='ppo',
+    name='isaac_ppo',
     version='1.0.0',
     author='Dyuman Aditya',
     author_email='dyuman.aditya@gmail.com',

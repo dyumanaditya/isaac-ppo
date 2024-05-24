@@ -1,8 +1,8 @@
 import torch
 from torch import nn
 
-from ppo.scripts.policy.actor import Actor
-from ppo.scripts.policy.critic import Critic
+from isaac_ppo.scripts.policy.actor import Actor
+from isaac_ppo.scripts.policy.critic import Critic
 
 
 class ActorCritic(nn.Module):

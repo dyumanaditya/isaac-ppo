@@ -3,7 +3,7 @@ import torch.nn as nn
 from torch.distributions import Normal
 from torchsummary import summary
 
-from ppo.scripts.policy.network import MLP
+from isaac_ppo.scripts.policy.network import MLP
 
 
 class Actor(nn.Module):

@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 from torchsummary import summary
 
-from ppo.scripts.policy.network import MLP
+from isaac_ppo.scripts.policy.network import MLP
 
 
 class Critic(nn.Module):

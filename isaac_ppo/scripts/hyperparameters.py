@@ -3,7 +3,6 @@ class Hyperparameters:
 		Contains the default hyperparameters for the PPO algorithm
 	"""
 	def __init__(self):
-		self.device = 'gpu'
 		self.gamma = 0.99
 		self.lam = 0.95
 		self.lr = 1e-4
@@ -25,9 +24,9 @@ class Hyperparameters:
 		self.optimizer = 'Adam'
 
 		self.num_transitions_per_env = 96
-		# self.memory_size = 4096
 
 		self.num_epochs = 5
 		self.num_minibatches = 4
 
-		self.render = False
+	def as_dict(self):
+		return self.__dict__

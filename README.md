@@ -27,9 +27,10 @@ pip install -e .
 We only support continuous action spaces at the moment.
 
 ### Training
+
 ```python
 import gymnasium as gym
-from ppo import PPO, Hyperparameters
+from isaac_ppo import PPO, Hyperparameters
 
 from omni.isaac.orbit.app.app_launcher import AppLauncher
 from utils.argparser import get_argparser
@@ -51,7 +52,6 @@ simulation_app = app_launcher.app
 
 # Import the necessary modules after Isaac Sim is launched
 from omni.isaac.orbit_tasks.utils import parse_env_cfg
-
 
 # Parse the arguments
 # Environment configuration
@@ -79,9 +79,10 @@ python train.py --task Isaac-Velocity-Flat-Unitree-A1-v0 --num_envs 1024
 ```
 
 ### Evaluation
+
 ```python
 import gymnasium as gym
-from ppo import PPO, Hyperparameters
+from isaac_ppo import PPO, Hyperparameters
 
 from omni.isaac.orbit.app.app_launcher import AppLauncher
 from utils.argparser import get_argparser
@@ -103,7 +104,6 @@ simulation_app = app_launcher.app
 
 # Import the necessary modules after Isaac Sim is launched
 from omni.isaac.orbit_tasks.utils import parse_env_cfg
-
 
 # Parse the arguments
 # Environment configuration

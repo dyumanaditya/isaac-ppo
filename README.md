@@ -73,6 +73,11 @@ agent.learn(max_steps=2000)
 
 ```
 
+Then run the python file
+```bash
+python train.py --task Isaac-Velocity-Flat-Unitree-A1-v0 --num_envs 1024
+```
+
 ### Evaluation
 ```python
 import gymnasium as gym
@@ -117,4 +122,9 @@ agent.policy_path = 'policies'
 # Learn
 # agent.learn(max_steps=2000)
 agent.simulate('policies/ppo_actor_critic.pth')
+```
+
+Then run the python file
+```bash
+python evaluate.py --task Isaac-Velocity-Flat-Unitree-A1-v0 --num_envs 1
 ```

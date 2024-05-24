@@ -25,8 +25,15 @@ class ActorCritic(nn.Module):
 	def get_value(self, state):
 		return self.critic(state)
 
-	def log_prob_from_distribution(self, state, act):
-		return self.actor.log_prob_from_distribution(state, act)
+	def log_prob_from_distribution(self, act):
+		return self.actor.log_prob_from_distribution(act)
+
+	def get_mu_sigma(self):
+		return self.actor.get_mu_sigma()
+
+	def get_entropy(self):
+		return self.actor.distribution.entropy().sum(dim=-1)
+
 
 	def get_optimizer(self, optimizer, lr):
 		if optimizer == 'Adam':

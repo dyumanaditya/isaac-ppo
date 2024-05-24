@@ -4,8 +4,9 @@ import numpy as np
 
 
 class MLP(nn.Module):
-	def __init__(self, input_dim, output_dim, hidden_sizes, activations):
+	def __init__(self, input_dim, output_dim, hidden_sizes, activations, device):
 		super(MLP, self).__init__()
+		self.device = device
 
 		# Create a dictionary of activation functions
 		self.activations_dict = nn.ModuleDict({
@@ -26,7 +27,7 @@ class MLP(nn.Module):
 		layers.append(self.activations_dict[activations[0]])
 
 		# Create the hidden layers
-		for i in range(1, len(hidden_sizes) - 1):
+		for i in range(len(hidden_sizes) - 1):
 			layers.append(nn.Linear(hidden_sizes[i], hidden_sizes[i + 1]))
 			layers.append(self.activations_dict[activations[i + 1]])
 
@@ -34,7 +35,7 @@ class MLP(nn.Module):
 		layers.append(nn.Linear(hidden_sizes[-1], output_dim))
 
 		# Create the network
-		self.mlp = nn.Sequential(*layers)
+		self.mlp = nn.Sequential(*layers).to(device)
 
 	def forward(self, x):
 		# Convert observation to tensor if it is a numpy array

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+from torchsummary import summary
 
 from ppo.scripts.policy.network import MLP
 
@@ -9,7 +10,9 @@ class Critic(nn.Module):
 		super(Critic, self).__init__()
 		self.device = device
 
-		self.v_net = MLP(state_dim, 1, hidden_sizes, activations).to(self.device)
+		self.v_net = MLP(state_dim, 1, hidden_sizes, activations, device).to(self.device)
+		print("Critic Network")
+		print(summary(self.v_net.mlp, (state_dim,)))
 
 	def forward(self, state):
 		value = self.v_net.mlp(state)

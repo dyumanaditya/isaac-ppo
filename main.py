@@ -25,7 +25,7 @@ def main():
 	if learn:
 		agent.learn(max_steps=1000000)
 	else:
-		agent.simulate('policies/ppo_actor_critic_1000.pth')
+		agent.simulate('policies/saved/ppo_actor_critic_1000.pth')
 
 
 if __name__ == '__main__':

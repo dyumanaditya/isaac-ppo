@@ -9,25 +9,25 @@ class Hyperparameters:
 		self.lr = 1e-4
 
 		self.clip_ratio = 0.2
-		# self.kl_target = 0.01
-		self.kl_target = None
+		self.kl_target = 0.01
+		# self.kl_target = None
 
-		self.value_loss_coef = 0.5
-		self.entropy_coef = 0.0
-		self.max_grad_norm = 0.5
+		self.value_loss_coef = 1.0
+		self.entropy_coef = 0.01
+		self.max_grad_norm = 1.0
+		self.clip_value_loss = True
 
-		self.actor_hidden_sizes = [64, 64]
-		self.critic_hidden_sizes = [64, 64]
-		self.actor_activations = ['tanh', 'tanh', 'none']
-		self.critic_activations = ['tanh', 'tanh', 'none']
+		self.actor_hidden_sizes = [512, 256, 128]
+		self.critic_hidden_sizes = [512, 256, 128]
+		self.actor_activations = ['elu', 'elu', 'elu']
+		self.critic_activations = ['elu', 'elu', 'elu']
 
 		self.optimizer = 'Adam'
 
-		self.memory_size = 2048
+		self.num_transitions_per_env = 96
 		# self.memory_size = 4096
 
-		self.num_epochs = 10
-		self.minibatch_size = 64
-		self.normalize_advantages = True
+		self.num_epochs = 5
+		self.num_minibatches = 4
 
 		self.render = False

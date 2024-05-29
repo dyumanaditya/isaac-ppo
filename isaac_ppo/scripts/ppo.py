@@ -1,6 +1,5 @@
 import torch
 import time
-import gymnasium as gym
 from gymnasium.wrappers.record_video import RecordVideo
 
 from isaac_ppo.scripts.memory import Memory
@@ -145,6 +144,7 @@ class PPO:
 					# Get the mean and std for KL calculations later on
 					mu, sigma = self.actor_critic.get_mu_sigma()
 					self._process_env_step(states, actions, rewards, dones, timeouts, values, log_probs, mu, sigma)
+					dones = dones | timeouts
 
 					# Set to new observation
 					states = next_states
@@ -163,9 +163,9 @@ class PPO:
 					episode_length[new_ids] = 0
 
 					# If any episode timed out or terminated, clear the reward and length
-					new_ids_timeout = (timeouts > 0).nonzero(as_tuple=False)
-					episode_rewards[new_ids_timeout] = 0
-					episode_length[new_ids_timeout] = 0
+					# new_ids_timeout = (timeouts > 0).nonzero(as_tuple=False)
+					# episode_rewards[new_ids_timeout] = 0
+					# episode_length[new_ids_timeout] = 0
 
 				# Compute the returns for the rollout
 				self.memory.compute_returns(values)
@@ -238,6 +238,7 @@ class PPO:
 				next_states, rewards, dones, timeouts, info = self.env.step(actions)
 
 				states = next_states
+				dones = dones | timeouts
 
 				# Update the episode information
 				episode_counter += torch.sum(dones).item()
@@ -251,9 +252,9 @@ class PPO:
 				episode_length[new_ids] = 0
 
 				# If any episode timed out or terminated, clear the reward and length
-				new_ids_timeout = (timeouts > 0).nonzero(as_tuple=False)
-				episode_rewards[new_ids_timeout] = 0
-				episode_length[new_ids_timeout] = 0
+				# new_ids_timeout = (timeouts > 0).nonzero(as_tuple=False)
+				# episode_rewards[new_ids_timeout] = 0
+				# episode_length[new_ids_timeout] = 0
 
 				if episode_counter == 0:
 					mean_episode_reward = torch.sum(episode_rewards).item()

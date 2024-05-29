@@ -23,6 +23,7 @@ class Hyperparameters:
 
 		self.optimizer = 'Adam'
 
+		# self.num_transitions_per_env = 96
 		self.num_transitions_per_env = 24
 
 		self.num_epochs = 5

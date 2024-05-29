@@ -1,5 +1,7 @@
 import torch
 import time
+import statistics
+from collections import deque
 from gymnasium.wrappers.record_video import RecordVideo
 
 from isaac_ppo.scripts.memory import Memory
@@ -121,11 +123,11 @@ class PPO:
 		total_policy_updates = 0
 		for timestep in range(max_steps):
 			# Episode related information
+			reward_buffer = deque(maxlen=100)
+			length_buffer = deque(maxlen=100)
 			num_rollout_episodes = 0
 			episode_length = torch.zeros(self.num_envs, device=self.device)
 			episode_rewards = torch.zeros(self.num_envs, device=self.device)
-			cumulative_episode_rewards = 0
-			cumulative_episode_lengths = 0
 
 			# Collect rollouts
 			with torch.inference_mode():
@@ -155,20 +157,19 @@ class PPO:
 					episode_rewards += rewards
 					episode_length += 1
 
-					# If any episode finished, add to cumulative rewards
+					# Find all environments that have "done" and store the final rewards and lengths
 					new_ids = (dones > 0).nonzero(as_tuple=False)
-					cumulative_episode_rewards += torch.sum(episode_rewards[new_ids]).item()
-					cumulative_episode_lengths += torch.sum(episode_length[new_ids]).item()
+					reward_buffer.extend(episode_rewards[new_ids][:, 0].cpu().numpy().tolist())
+					length_buffer.extend(episode_length[new_ids][:, 0].cpu().numpy().tolist())
+
+					# If any episode finished, reset the rewards and lengths
 					episode_rewards[new_ids] = 0
 					episode_length[new_ids] = 0
 
-					# If any episode timed out or terminated, clear the reward and length
-					# new_ids_timeout = (timeouts > 0).nonzero(as_tuple=False)
-					# episode_rewards[new_ids_timeout] = 0
-					# episode_length[new_ids_timeout] = 0
-
 				# Compute the returns for the rollout
-				self.memory.compute_returns(values)
+				next_states = next_states['policy']
+				last_values = self.actor_critic.get_value(next_states).detach()
+				self.memory.compute_returns(last_values)
 
 			# Go over the rollouts for multiple epochs
 			mean_loss = 0
@@ -193,13 +194,12 @@ class PPO:
 			self.memory.reset()
 
 			# LOGGING
-			if num_rollout_episodes == 0:
-				mean_episode_reward = torch.sum(episode_rewards).item()
-				mean_episode_length = torch.sum(episode_length).item()
+			if len(reward_buffer) > 0:
+				mean_episode_reward = statistics.mean(reward_buffer)
+				mean_episode_length = statistics.mean(length_buffer)
 			else:
-				mean_episode_reward = cumulative_episode_rewards / num_rollout_episodes
-				mean_episode_length = cumulative_episode_lengths / num_rollout_episodes
-
+				mean_episode_reward = None
+				mean_episode_length = None
 			self.logger.log_training_info(timestep, env_steps, total_episodes, total_policy_updates, mean_episode_reward, mean_episode_length, mean_loss, mean_value_loss, mean_surrogate_loss, self.lr)
 
 			# Print Information
@@ -225,8 +225,8 @@ class PPO:
 		episode_counter = 0
 		episode_length = torch.zeros(self.num_envs, device=self.device)
 		episode_rewards = torch.zeros(self.num_envs, device=self.device)
-		cumulative_episode_rewards = 0
-		cumulative_episode_lengths = 0
+		reward_buffer = deque(maxlen=100)
+		length_buffer = deque(maxlen=100)
 
 		# Simulate the environment
 		while episode_counter <= max_episodes:
@@ -246,25 +246,22 @@ class PPO:
 				episode_length += 1
 
 				new_ids = (dones > 0).nonzero(as_tuple=False)
-				cumulative_episode_rewards += torch.sum(episode_rewards[new_ids]).item()
-				cumulative_episode_lengths += torch.sum(episode_length[new_ids]).item()
+				reward_buffer.extend(episode_rewards[new_ids][:, 0].cpu().numpy().tolist())
+				length_buffer.extend(episode_length[new_ids][:, 0].cpu().numpy().tolist())
+
+				# If any episode finished, reset the rewards and lengths
 				episode_rewards[new_ids] = 0
 				episode_length[new_ids] = 0
 
-				# If any episode timed out or terminated, clear the reward and length
-				# new_ids_timeout = (timeouts > 0).nonzero(as_tuple=False)
-				# episode_rewards[new_ids_timeout] = 0
-				# episode_length[new_ids_timeout] = 0
-
-				if episode_counter == 0:
-					mean_episode_reward = torch.sum(episode_rewards).item()
-					mean_episode_length = torch.sum(episode_length).item()
+				if len(reward_buffer) > 0:
+					mean_episode_reward = statistics.mean(reward_buffer)
+					mean_episode_length = statistics.mean(length_buffer)
 				else:
-					mean_episode_reward = cumulative_episode_rewards / episode_counter
-					mean_episode_length = cumulative_episode_lengths / episode_counter
+					mean_episode_reward = None
+					mean_episode_length = None
 				print("-"*50)
-				print(f"Mean Episode Reward: {round(mean_episode_reward, 10)}", flush=True)
-				print(f"Mean Episode Length: {round(mean_episode_length, 10)}", flush=True)
+				print(f"Mean Episode Reward: {mean_episode_reward}", flush=True)
+				print(f"Mean Episode Length: {mean_episode_length}", flush=True)
 				print("-"*50)
 
 		# End

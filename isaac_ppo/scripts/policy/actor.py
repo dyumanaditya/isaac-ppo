@@ -17,7 +17,7 @@ class Actor(nn.Module):
 		self.sigma = None
 
 		# Initialize the log standard deviation to -0.5 to encourage exploration
-		log_std = -0.5 * torch.ones(action_dim, dtype=torch.float)
+		log_std = 1.0 * torch.ones(action_dim, dtype=torch.float)
 		self.log_std = nn.Parameter(torch.as_tensor(log_std).to(self.device))
 
 		# Initialize the actor network

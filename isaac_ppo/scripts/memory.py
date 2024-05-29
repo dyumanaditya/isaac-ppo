@@ -26,17 +26,18 @@ class Memory:
 	def store_transitions(self, states, actions, rewards, dones, values, log_probs, actions_mu, actions_sigma):
 		# Buffer has to have room so you can store
 		assert self.step < self.num_transitions_per_env, 'Buffer is full, you cannot store more transitions'
-		self.states[self.step].copy_(states)
-		self.actions[self.step].copy_(actions)
-		self.rewards[self.step].copy_(rewards.view(-1, 1))
-		self.dones[self.step].copy_(dones.view(-1, 1))
-		self.values[self.step].copy_(values.view(-1, 1))
-		self.log_probs[self.step].copy_(log_probs.view(-1, 1))
-		self.mu[self.step].copy_(actions_mu)
-		self.sigma[self.step].copy_(actions_sigma)
+		self.states[self.step].copy_(states.detach())
+		self.actions[self.step].copy_(actions.detach())
+		self.rewards[self.step].copy_(rewards.detach().view(-1, 1))
+		self.dones[self.step].copy_(dones.detach().view(-1, 1))
+		self.values[self.step].copy_(values.detach().view(-1, 1))
+		self.log_probs[self.step].copy_(log_probs.detach().view(-1, 1))
+		self.mu[self.step].copy_(actions_mu.detach())
+		self.sigma[self.step].copy_(actions_sigma.detach())
 		self.step += 1
 
 	def compute_returns(self, last_values):
+		assert self.step == self.num_transitions_per_env, "Buffer is not full, you cannot compute returns."
 		# GAE
 		advantage = 0
 		for step in reversed(range(self.num_transitions_per_env)):

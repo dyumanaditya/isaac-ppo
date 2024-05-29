@@ -137,6 +137,7 @@ class PPO:
 					states = states['policy']
 					actions = self.actor_critic.get_action(states)
 					next_states, rewards, dones, timeouts, info = self.env.step(actions)
+					dones = (dones | timeouts).to(dtype=torch.long)
 					
 					# Store the transition
 					# Get value and log probs
@@ -146,7 +147,6 @@ class PPO:
 					# Get the mean and std for KL calculations later on
 					mu, sigma = self.actor_critic.get_mu_sigma()
 					self._process_env_step(states, actions, rewards, dones, timeouts, values, log_probs, mu, sigma)
-					dones = dones | timeouts
 
 					# Set to new observation
 					states = next_states
@@ -337,7 +337,8 @@ class PPO:
 
 	def _process_env_step(self, states, actions, rewards, dones, timeouts, values, log_probs, mu, sigma):
 		# Bootstrap on timeouts
-		rewards += self.gamma * torch.squeeze(values * timeouts.unsqueeze(dim=1), dim=1)
+		bootstrapped_rewards = rewards.clone()
+		bootstrapped_rewards += self.gamma * torch.squeeze(values * timeouts.unsqueeze(dim=1), dim=1)
 
 		# Store the transition
-		self.memory.store_transitions(states, actions, rewards, dones, values, log_probs, mu, sigma)
+		self.memory.store_transitions(states.clone(), actions, bootstrapped_rewards, dones, values, log_probs, mu, sigma)

@@ -121,14 +121,14 @@ class PPO:
 		total_episodes = 0
 		env_steps = 0
 		total_policy_updates = 0
-		for timestep in range(max_steps):
-			# Episode related information
-			reward_buffer = deque(maxlen=100)
-			length_buffer = deque(maxlen=100)
-			num_rollout_episodes = 0
-			episode_length = torch.zeros(self.num_envs, device=self.device)
-			episode_rewards = torch.zeros(self.num_envs, device=self.device)
 
+		# Episode related information
+		reward_buffer = deque(maxlen=100)
+		length_buffer = deque(maxlen=100)
+		episode_length = torch.zeros(self.num_envs, device=self.device)
+		episode_rewards = torch.zeros(self.num_envs, device=self.device)
+
+		for timestep in range(max_steps):
 			# Collect rollouts
 			with torch.inference_mode():
 				for rollout in range(self.num_transitions_per_env):
@@ -152,8 +152,7 @@ class PPO:
 					states = next_states
 
 					# Keep track of rewards to print later
-					num_rollout_episodes += torch.sum(dones).item()
-					total_episodes += num_rollout_episodes
+					total_episodes += torch.sum(dones).item()
 					episode_rewards += rewards
 					episode_length += 1
 

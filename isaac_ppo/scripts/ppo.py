@@ -92,20 +92,25 @@ class PPO:
 		self.log_dir = log_dir
 
 		# Create Logger that will log all details
+		self.logger = None
+		self.video_length = video_length
+		self.video_save_freq = video_save_freq
+
+	def learn(self, max_steps=100000, actor_critic_model_path=None, optimizer_model_path=None):
+		# Create Logger that will log all details
 		self.logger = Logger(self.log_dir, self.stamp, self.save_freq, self.record_video)
 
 		# Setup Video recording
 		if self.record_video:
 			video_kwargs = {
 				'video_folder': self.logger.video_folder,
-				'video_length': video_length,
-				'step_trigger': lambda x: x % video_save_freq == 0,
+				'video_length': self.video_length,
+				'step_trigger': lambda x: x % self.video_save_freq == 0,
 				'disable_logger': True,
 				'name_prefix': self.stamp
 			}
 			self.env = RecordVideo(self.env, **video_kwargs)
 
-	def learn(self, max_steps=100000, actor_critic_model_path=None, optimizer_model_path=None):
 		# Log the hyperparameters
 		self.logger.log_hyperparameters(self.hyperparameters.as_dict())
 

@@ -13,6 +13,7 @@ class Critic(nn.Module):
 		self.v_net = MLP(state_dim, 1, hidden_sizes, activations, device).to(self.device)
 		print("Critic Network")
 		print(summary(self.v_net.mlp, (state_dim,)))
+		print(self.v_net.mlp, '\n')
 
 	def forward(self, state):
 		value = self.v_net.mlp(state)

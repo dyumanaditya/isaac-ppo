@@ -5,7 +5,7 @@ class Hyperparameters:
 	def __init__(self):
 		self.gamma = 0.99
 		self.lam = 0.95
-		self.lr = 1e-4
+		self.lr = 1e-3
 
 		self.clip_ratio = 0.2
 		self.kl_target = 0.01

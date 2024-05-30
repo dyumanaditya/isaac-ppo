@@ -296,7 +296,7 @@ class PPO:
 					- 0.5,
 					dim=-1
 				)
-				kl_mean = kl.mean()
+				kl_mean = torch.mean(kl)
 
 				# If KL is too high, reduce the learning rate
 				# If KL is too low, increase the learning rate
@@ -313,8 +313,8 @@ class PPO:
 		# Policy Loss
 		ratio = torch.exp(current_log_probs - torch.squeeze(log_probs_batch))
 		surrogate = -torch.squeeze(advantages_batch) * ratio
-		clipped_surrogate = -torch.squeeze(advantages_batch) * torch.clamp(ratio, 1 - self.clip_ratio, 1 + self.clip_ratio)
-		surrogate_loss = -torch.min(surrogate, clipped_surrogate).mean()
+		clipped_surrogate = -torch.squeeze(advantages_batch) * torch.clamp(ratio, 1.0 - self.clip_ratio, 1.0 + self.clip_ratio)
+		surrogate_loss = torch.max(surrogate, clipped_surrogate).mean()
 
 		# Value Loss
 		if self.clip_value_loss:
